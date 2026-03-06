@@ -468,7 +468,7 @@ EOF
 
 detect_ssh_port() {
     local port
-    port=$(ss -tlnp | grep sshd | awk '{print $4}' | grep -oP '[0-9]+$' | head -1)
+    port=$(sshd -T 2>/dev/null | awk '/^port / {print $2; exit}')
     echo "${port:-22}"
 }
 
