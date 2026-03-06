@@ -1071,7 +1071,7 @@ show_banner() {
 show_menu() {
     # Check if installed
     local installed=false
-    is_installed && installed=true
+    if is_installed; then installed=true; fi
 
     echo ""
     print_line
