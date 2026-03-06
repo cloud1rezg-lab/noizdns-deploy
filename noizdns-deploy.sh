@@ -208,6 +208,9 @@ generate_keys() {
 
 import_existing_key() {
     echo ""
+    echo -e "  ${CYAN}Tip:${NC} Find your private key on the old server at:"
+    echo -e "  ${WHITE}cat /etc/noizdns/*_server.key${NC}"
+    echo ""
     print_question "Paste your private key (64 hex chars): "
     read -r privkey_hex
 
@@ -219,27 +222,25 @@ import_existing_key() {
         return
     fi
 
-    # Write private key to file
+    # Write private key
     echo "$privkey_hex" > "$PRIVATE_KEY_FILE"
 
-    # Derive public key by running dnstt-server with the private key
-    # dnstt-server prints "pubkey <hex>" to stdout when started, but we need
-    # a cleaner way. Generate a throwaway keypair, then overwrite the privkey
-    # and use -gen-key to derive the pubkey.
-    # Actually, we can use the -privkey flag to start the server briefly and
-    # capture the pubkey from the log. Simpler: use openssl or a hex trick.
-    #
-    # The Noise protocol pubkey = Curve25519 base point * privkey.
-    # dnstt-server -gen-key always generates both. Instead, we write the
-    # privkey file and ask the user for the pubkey too.
-    print_question "Paste the matching public key (64 hex chars): "
-    read -r pubkey_hex
+    # Derive public key: start dnstt-server briefly and capture the pubkey from log
+    print_status "Deriving public key..."
+    local pubkey_hex
+    pubkey_hex=$(timeout 2 dnstt-server -privkey "$privkey_hex" -gen-key 2>&1 | grep -oP 'pubkey\s+\K[0-9a-f]{64}' || true)
 
-    if [[ ! "$pubkey_hex" =~ ^[0-9a-fA-F]{64}$ ]]; then
-        print_error "Invalid public key. Must be exactly 64 hex characters."
-        print_status "Falling back to generating a new keypair..."
-        dnstt-server -gen-key -privkey-file "$PRIVATE_KEY_FILE" -pubkey-file "$PUBLIC_KEY_FILE"
-        return
+    if [[ -z "$pubkey_hex" ]]; then
+        # Fallback: ask user for the pubkey
+        print_warning "Could not derive public key automatically."
+        print_question "Paste the matching public key (64 hex chars): "
+        read -r pubkey_hex
+        if [[ ! "$pubkey_hex" =~ ^[0-9a-fA-F]{64}$ ]]; then
+            print_error "Invalid public key."
+            print_status "Falling back to generating a new keypair..."
+            dnstt-server -gen-key -privkey-file "$PRIVATE_KEY_FILE" -pubkey-file "$PUBLIC_KEY_FILE"
+            return
+        fi
     fi
 
     echo "$pubkey_hex" > "$PUBLIC_KEY_FILE"
