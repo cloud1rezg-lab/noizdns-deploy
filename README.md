@@ -14,6 +14,10 @@ After installation, run `noizdns` anytime for the management menu.
 
 NoizDNS is a DPI-evasion layer on top of [dnstt](https://www.bamsoftware.com/software/dnstt/). The server auto-detects which protocol a client uses per-query, so both standard dnstt and NoizDNS clients work simultaneously through the same server.
 
+## Client
+
+[**SlipNet**](https://github.com/anonvector/SlipNet) — Android VPN client with built-in DNSTT and NoizDNS support, DNS scanner, and SSH tunneling.
+
 ## Prerequisites
 
 Before running the script, configure your DNS records:
