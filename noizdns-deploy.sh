@@ -489,7 +489,10 @@ start_services() {
 # ─── Info Display ─────────────────────────────────────────────────────────────
 
 is_installed() {
-    [ -f "${INSTALL_DIR}/dnstt-server" ] && [ -f "$CONFIG_FILE" ]
+    if [ -f "${INSTALL_DIR}/dnstt-server" ] && [ -f "$CONFIG_FILE" ]; then
+        return 0
+    fi
+    return 1
 }
 
 show_configuration_info() {
@@ -1063,7 +1066,7 @@ handle_menu() {
                 return 0
                 ;;
             2)
-                show_configuration_info
+                show_configuration_info || true
                 ;;
             3)
                 if systemctl is-active --quiet "$SERVICE_NAME" 2>/dev/null; then
@@ -1075,10 +1078,10 @@ handle_menu() {
                 ;;
             4)
                 print_status "Showing logs (Ctrl+C to exit)..."
-                journalctl -u "$SERVICE_NAME" -f
+                journalctl -u "$SERVICE_NAME" -f || true
                 ;;
             5)
-                user_management_menu
+                user_management_menu || true
                 ;;
             6)
                 systemctl restart "$SERVICE_NAME" 2>/dev/null && print_status "Service restarted" || print_error "Failed to restart"
@@ -1097,10 +1100,10 @@ handle_menu() {
                 systemctl restart "$SERVICE_NAME" 2>/dev/null && print_status "Service restarted" || print_warning "Service not running"
                 ;;
             10)
-                update_script
+                update_script || true
                 ;;
             11)
-                uninstall
+                uninstall || true
                 ;;
             0)
                 echo -e "  ${GREEN}Goodbye!${NC}"
